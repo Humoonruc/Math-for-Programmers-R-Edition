@@ -5,9 +5,11 @@
 translate <- function(points, translation) {
   n <- ncol(points)
   variable_names <- c("b", colnames(points))
-  m1 <- rep(0, (n + 1)) %>% t() # 第一行
-  m2 <- cbind(t(translation), diag(n)) # 后n行
-  m_translate <- rbind(m1, m2)
+  m1 <- c(0, t(translation)) # 第一列
+  m2 <- rbind(t(rep(0, n)), diag(n)) # 后n列
+  ## m1 <- rep(0, (n + 1)) %>% t() # 第一行
+  ## m2 <- cbind(t(translation), diag(n)) # 后n行
+  m_translate <- cbind(m1, m2)
 
   m_points <- points %>%
     mutate(b = 1) %>%
@@ -45,12 +47,12 @@ scale <- function(points, scalar) {
 
 
 # 旋转，第二个参数是旋转弧度
-rotate <- function(points, rotation) {
-  # 方法二：转换到极坐标系中改变角度
+rotate_2d <- function(points, rotation) {
+  # 方法一：转换到极坐标系中改变角度
   ## points %>%
-  ##   to_polor() %>%
+  ##   to_polor_2d() %>%
   ##   mutate(theta = theta + rotation) %>%
-  ##   to_cartesian()
+  ##   to_cartesian_2d()
 
   # 方法二：用矩阵乘法实现线性变换
   variable_names <- colnames(points)

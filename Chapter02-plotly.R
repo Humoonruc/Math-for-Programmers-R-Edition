@@ -6,10 +6,12 @@ library(data.table)
 library(plotly)
 library(htmlwidgets)
 
+
 # import source
 source("./src/plot2D-plotly.R")
 source("./src/calculate2D.R")
 source("./src/transform2D.R")
+
 
 # data
 dinosaur <- fread("data/data.csv")
@@ -21,27 +23,44 @@ dinosaur <- fread("data/data.csv")
 
 # plot and save
 p <- create_canvas_2d() %>%
-  draw_points(dinosaur) %>%
-  draw_polygon(dinosaur)
+  draw_point(dinosaur) %>%
+  draw_polygon(dinosaur) %>%
+  layout(
+    title = list(text = "A dinasaur: scatters and lines")
+  )
 p
 saveWidget(p, "./img/dinosaur.html", selfcontained = F, libdir = "lib")
 
 
-# vector translation
+# translation
 dinosaur2 <- dinosaur %>%
   translate(data.table(x = -1.5, y = -2.5))
 
 p <- create_canvas_2d() %>%
-  draw_points(dinosaur) %>%
+  draw_point(dinosaur) %>%
   draw_polygon(dinosaur) %>%
-  draw_points(dinosaur2, color = "red") %>%
-  draw_polygon(dinosaur2, color = "red")
+  draw_point(dinosaur2, color = "red") %>%
+  draw_polygon(dinosaur2, color = "red") %>%
+  reduce(
+    .x = 1:nrow(dinosaur),
+    .f = function(p, i) {
+      p %>%
+        draw_arrow_2d(dinosaur[i, ], dinosaur2[i, ], linetype = "dash")
+    },
+    .init = .
+  ) %>%
+  layout(
+    title = list(text = "2 dinasaurs: translation")
+  )
 p
-saveWidget(p, "./img/dinosaur2.html", selfcontained = F, libdir = "lib")
+saveWidget(p, "./img/dinosaur-translation.html", selfcontained = F, libdir = "lib")
 
 
 # 81 只小恐龙
-p <- create_canvas_2d()
+p <- create_canvas_2d() %>%
+  layout(
+    title = list(text = "many dinasaurs: translation")
+  )
 for (dx in -4:4 * 12) {
   for (dy in -4:4 * 10) {
     translation <- data.table(x = dx, y = dy)
@@ -51,7 +70,7 @@ for (dx in -4:4 * 12) {
   }
 }
 p
-saveWidget(p, "./img/multi-dinosaur.html", selfcontained = F, libdir = "lib")
+saveWidget(p, "./img/dinosaur-multi.html", selfcontained = F, libdir = "lib")
 
 
 ###############################################################
@@ -71,14 +90,38 @@ z <- data.table(x = -1, y = 1)
 v <- data.table(x = 1, y = 1)
 n <- 2000 # 样本容量
 random_r <- runif(n, -3, 3)
-random_s <- runif(n, -1, 1)
+random_s <- runif(n, -2, 2)
+z_max <- scale(z, 3)
+z_min <- scale(z, -3)
+v_max <- scale(v, 2)
+v_min <- scale(v, -2)
 
-possible_space <- map2_dfr(random_r, random_s, function(x, y) {
-  vector_add(scale(z, x), scale(v, y))
-})
+possible_space <- map2_dfr(
+  .x = random_r, .y = random_s,
+  .f = \(x, y) {
+    vector_add(scale(z, x), scale(v, y))
+  }
+)
 
 p <- create_canvas_2d() %>%
-  draw_points(possible_space, color = "black")
+  draw_point(possible_space, color = "grey") %>%
+  draw_line(z_max, z_min, color = "tomato", linetype = "dash") %>%
+  draw_arrow_2d(data.table(x = 0, y = 0), z, color = "red") %>%
+  add_text(
+    x = -1, y = 1, text = "<b>(-1,1)</b>",
+    textfont = list(color = "red", size = 16),
+    textposition = "top right"
+  ) %>%
+  draw_line(v_max, v_min, color = "royalblue", linetype = "dash", ) %>%
+  draw_arrow_2d(data.table(x = 0, y = 0), v, color = "blue") %>%
+  add_text(
+    x = 1, y = 1, text = "<b>(1,1)</b>",
+    textfont = list(color = "blue", size = 16),
+    textposition = "top right"
+  ) %>%
+  layout(
+    title = list(text = "space of linear combination")
+  )
 p
 saveWidget(p, "./img/possible-space.html", selfcontained = F, libdir = "lib")
 
@@ -90,10 +133,13 @@ saveWidget(p, "./img/possible-space.html", selfcontained = F, libdir = "lib")
 # flower
 i <- 0:1000
 points_polor <- data.table(r = cos(i * pi / 100), theta = 2 * pi * i / 1000)
-points <- points_polor %>% to_cartesian()
+points <- points_polor %>% to_cartesian_2d()
 
 p <- create_canvas_2d() %>%
-  draw_polygon(points, color = "blue")
+  draw_polygon(points, color = "blue") %>%
+  layout(
+    title = list(text = "flower consists 1,000 points")
+  )
 p
 saveWidget(p, "./img/flower.html", selfcontained = F, libdir = "lib")
 
@@ -102,32 +148,32 @@ saveWidget(p, "./img/flower.html", selfcontained = F, libdir = "lib")
 dinosaur_rotated <- rotate(dinosaur, pi / 4)
 
 p <- create_canvas_2d() %>%
-  draw_points(dinosaur) %>%
+  draw_point(dinosaur) %>%
   draw_polygon(dinosaur) %>%
-  draw_points(dinosaur_rotated, color = "red") %>%
-  draw_polygon(dinosaur_rotated, color = "red")
+  draw_point(dinosaur_rotated, color = "red") %>%
+  draw_polygon(dinosaur_rotated, color = "red") %>%
+  layout(
+    title = list(text = "dinosaur: 2D rotation")
+  )
 p
-saveWidget(p, "./img/dinosaur_rotated.html", selfcontained = F, libdir = "lib")
+saveWidget(p, "./img/dinosaur-rotation.html", selfcontained = F, libdir = "lib")
 
-
-###############################################################
-## linear transforming
-###############################################################
 
 # 生成正n边形
 regular_polygon <- function(n) {
-  l_points <- list(data.table(x = 1, y = 0))
-  for (i in 1:(n - 1)) {
-    l_points[[i + 1]] <- l_points[[1]] %>% rotate(2 * pi * i / n)
-  }
-  l_points %>%
-    reduce(.f = \(p1, p2) rbind(p1, p2)) # 匿名函数
+  0:(n - 1) %>%
+    map(.f = \(i) {
+      data.table(x = 1, y = 0) %>%
+        rotate(2 * pi * i / n)
+    }) %>%
+    reduce(.f = rbind)
 }
-
-n <- 7
-
+heptagon <- regular_polygon(7)
 p <- create_canvas_2d() %>%
-  draw_points(regular_polygon(n)) %>%
-  draw_polygon(regular_polygon(n))
+  draw_point(heptagon) %>%
+  draw_polygon(heptagon) %>%
+  layout(
+    title = list(text = "heptagon: 2D rotation")
+  )
 p
 saveWidget(p, "./img/regular-polygon.html", selfcontained = F, libdir = "lib")

@@ -3,7 +3,8 @@
 library(tidyverse)
 library(magrittr)
 library(data.table)
-
+library(plotly)
+library(htmlwidgets)
 
 # import source
 source("./src/plot2D-ggplot.R")
@@ -20,13 +21,15 @@ dinosaur <- fread("./data/data.csv")
 ###############################################################
 
 # plot and save
-create_canvas() %>%
+p <- create_canvas() %>%
   draw_scatter(dinosaur) %>%
   draw_polygon(dinosaur) +
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
-
-ggsave("./img/ggplot/dinosaur.png", width = 6, height = 6, dpi = 600)
+p
+p %>%
+  ggplotly() %>%
+  saveWidget("./img/ggplot/dinosaur.html", selfcontained = F, libdir = "lib")
 
 
 # vector translation

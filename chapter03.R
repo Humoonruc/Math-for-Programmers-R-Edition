@@ -10,6 +10,7 @@ library(htmlwidgets)
 ## import functions
 source("./src/plot3D.R")
 source("./src/calculate3D.R")
+source("./src/transform2D.R")
 source("./src/transform3D.R")
 
 

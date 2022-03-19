@@ -46,15 +46,17 @@ get_perimeter <- function(points) {
 }
 
 
-# 极坐标与直角坐标的转换
-to_cartesian <- function(points_polar) {
+# 2d极坐标与直角坐标的转换
+to_cartesian_2d <- function(points_polar) {
   points_polar %>%
     mutate(x = r * cos(theta), y = r * sin(theta)) %>%
     select(x, y)
 }
 
-to_polor <- function(points) {
+to_polor_2d <- function(points) {
   points %>%
     mutate(r = sqrt(x^2 + y^2), theta = atan2(y, x)) %>%
     select(r, theta)
 }
+
+
