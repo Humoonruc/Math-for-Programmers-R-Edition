@@ -1,7 +1,12 @@
 ## plot3D.R
 
-create_canvas <- function(range) {
-  origin <- data.table(x = 0, y = 0, z = 0)
+# config
+origin_3d <- data.table(x = 0, y = 0, z = 0)
+
+create_canvas_3d <- function(range,
+                             title_x = "<b>x</b>",
+                             title_y = "<b>y</b>",
+                             title_z = "<b>z</b>") {
   axis_x <- data.table(
     x = c(-range, range),
     y = c(0, 0),
@@ -20,10 +25,8 @@ create_canvas <- function(range) {
 
 
   plot_ly(
-    data = origin,
+    data = origin_3d,
     x = ~x, y = ~y, z = ~z,
-    width = 600, # 图形size，像素值
-    height = 600,
     showlegend = F
   ) %>%
     add_lines(data = axis_x, line = list(color = "black")) %>%
@@ -32,7 +35,7 @@ create_canvas <- function(range) {
     add_trace(
       type = "cone",
       x = range, y = 0, z = 0, # 箭头坐标
-      u = 1, v = 0, w = 0,
+      u = 1, v = 0, w = 0, # 箭头方向向量
       sizemode = "absolute", sizeref = 0.5,
       anchor = "tip", # 规定箭头坐标指顶点坐标
       colorscale = list(list(0, "black"), list(1, "black")), # 箭头单一颜色
@@ -40,32 +43,114 @@ create_canvas <- function(range) {
     ) %>%
     add_trace(
       type = "cone",
-      x = 0, y = range, z = 0, # 箭头坐标
+      x = 0, y = range, z = 0,
       u = 0, v = 1, w = 0,
       sizemode = "absolute", sizeref = 0.5,
-      anchor = "tip", # 规定箭头坐标指顶点坐标
+      anchor = "tip",
       colorscale = list(list(0, "black"), list(1, "black")), # 箭头单一颜色
-      showscale = FALSE # 不显示颜色图例
+      showscale = FALSE
     ) %>%
     add_trace(
       type = "cone",
-      x = 0, y = 0, z = range, # 箭头坐标
+      x = 0, y = 0, z = range,
       u = 0, v = 0, w = 1,
       sizemode = "absolute", sizeref = 0.5,
-      anchor = "tip", # 规定箭头坐标指顶点坐标
+      anchor = "tip",
       colorscale = list(list(0, "black"), list(1, "black")), # 箭头单一颜色
-      showscale = FALSE # 不显示颜色图例
+      showscale = FALSE
     ) %>%
-    add_text(x = range + 1.5, y = 0, z = -0.5, text = "X") %>%
-    add_text(x = 0, y = range + 1.5, z = -0.5, text = "Y") %>%
-    add_text(x = 0, y = 0, z = range + 1, text = "Z") %>%
+    add_text(
+      x = range + 1.5, y = 0, z = -0.5,
+      text = title_x, textposition = "top center"
+    ) %>%
+    add_text(
+      x = 0, y = range + 1.5, z = -0.5,
+      text = title_y, textposition = "top center"
+    ) %>%
+    add_text(
+      x = 0, y = 0, z = range + 1,
+      text = title_z, textposition = "top center"
+    ) %>%
     layout(
+      title = list(
+        font = list(size = 28),
+        y = 0, yanchor = "top", yref = "paper",
+        pad = list(t = 35)
+      ),
+      margin = list(b = 80, l = 30, r = 20),
       scene = list(
-        xaxis = list(title = ""),
-        yaxis = list(title = ""),
-        zaxis = list(title = ""),
+        # annotations 定义注释及箭头的样式
+        # x,y,z 定义注释箭头指向的点的位置
+        # ax, ay 定义注释文本（箭尾）的位置
+        annotations = list(
+
+          ## list(
+          ##   showarrow = F,
+          ##   x = "2017-01-01",
+          ##   y = "A",
+          ##   z = 0,
+          ##   text = "Point 1",
+          ##   xanchor = "left",
+          ##   xshift = 10,
+          ##   opacity = 0.7
+          ## ),
+          ## list(
+          ##   x = "2017-02-10",
+          ##   y = "B",
+          ##   z = 4,
+          ##   text = "Point 2",
+          ##   textangle = 0,
+          ##   ax = 0,
+          ##   ay = -75,
+          ##   font = list(
+          ##     color = "black",
+          ##     size = 12
+          ##   ),
+          ##   arrowcolor = "black",
+          ##   arrowsize = 3,
+          ##   arrowwidth = 1,
+          ##   arrowhead = 1
+          ## ),
+          ## list(
+          ##   x = "2017-03-20",
+          ##   y = "C",
+          ##   z = 5,
+          ##   ax = 50,
+          ##   ay = 0,
+          ##   text = "Point 3",
+          ##   arrowhead = 1,
+          ##   xanchor = "left",
+          ##   yanchor = "bottom"
+          ## )
+        ),
+        # 定义三个轴比例尺的比例
+        aspectratio = list(
+          x = 1,
+          y = 1,
+          z = 1
+        ),
+        xaxis = list(title = "", nticks = 10),
+        yaxis = list(title = "", nticks = 10),
+        zaxis = list(title = "", nticks = 10),
         camera = list(
-          eye = list(x = 1.76, y = -1.3, z = 0.92)
+          center = list(
+            x = 0,
+            y = 0,
+            z = 0
+          ),
+          eye = list(
+            x = 1.96903462608,
+            y = -1.09022831971,
+            z = 0.405345349304
+          ),
+          up = list(
+            x = 0,
+            y = 0,
+            z = 1
+          ),
+          projection = list(
+            type = "perspective" # 透视，另一个值是 orthographic
+          )
         )
       ),
       legend = list(
@@ -75,61 +160,50 @@ create_canvas <- function(range) {
 }
 
 
-draw_point <- function(p, points, color = "blue") {
+draw_arrow_3d <- function(p, begin, end,
+                          color = "dimgrey",
+                          linetype = "solid",
+                          width = 2) {
   p %>%
-    add_markers(
-      data = points,
-      marker = list(
-        size = 3,
-        color = color
-      )
-    )
-}
-
-draw_annotation <- function(p, text, point, color = "black") {
-  p %>%
-    add_text(
-      text = text,
-      x = point$x, y = point$y, z = point$z - 0.3,
-      textfont = list(
-        size = 18,
-        family = "Arial",
-        color = color
-      )
-    )
-}
-
-draw_segment <- function(p, point1, point2, color = "lightblue", linetype = "solid") {
-  p %>%
-    add_lines(
-      data = rbind(point1, point2),
-      line = list(
-        color = color,
-        width = 4,
-        dash = linetype
-      )
-    )
-}
-
-draw_arrow <- function(p, begin = data.table(x = 0, y = 0, z = 0), end, color = "orangered", linetype = "solid") {
-  p %>%
-    draw_segment(begin, end, color = color, linetype = linetype) %>%
+    draw_line(rbind(begin, end),
+      color = color, linetype = linetype, width = width
+    ) %>%
     add_trace(
       type = "cone",
       x = end$x, y = end$y, z = end$z, # 箭头坐标
       u = end$x - begin$x,
       v = end$y - begin$y,
-      w = end$z - begin$z, # 箭头本身在三个坐标轴上的投影
-      # sizemode = "absolute"后，三个投影之规定箭头的朝向，与箭头大小无关
+      w = end$z - begin$z, # 箭杆在三个坐标轴上的投影长度
+      sizemode = "absolute", # 三个投影只规定箭头的朝向，与箭头大小无关
       # 否则按默认值 sizemode='scaled'，上述投影大小即决定箭头的大小
-      sizemode = "absolute", sizeref = 1,
+      sizeref = 1,
       anchor = "tip", # 规定箭头坐标指顶点坐标
-      colorscale = list(c(0, color), c(1, color)), # 箭头单一颜色
+      colorscale = list(list(0, color), list(1, color)), # 箭头单一颜色
       showscale = FALSE # 不显示颜色图例
     )
 }
 
-draw_box <- function(p, point) {
+
+draw_face_3d <- function(p, points, facecolor = "lightgrey", opacity = 0.5, linecolor = "grey", linetype = "dash", width = 1.5) {
+  p %>%
+    add_mesh(
+      data = points,
+      facecolor = facecolor,
+      ## lightposition = list(x = 1, y = -10, z = 0),
+      opacity = opacity
+    ) %>%
+    add_lines(
+      data = points,
+      line = list(
+        color = "grey",
+        width = width,
+        dash = linetype
+      )
+    )
+}
+
+
+draw_box_3d <- function(p, point) {
   x <- point$x
   y <- point$y
   z <- point$z
@@ -141,27 +215,26 @@ draw_box <- function(p, point) {
   vertex6 <- data.table(x = 0, y = y, z = z)
 
   p %>%
-    draw_segment(vertex1, vertex2, "grey", "longdash") %>%
-    draw_segment(vertex2, vertex3, "grey", "longdash") %>%
-    draw_segment(vertex1, vertex4, "grey", "longdash") %>%
-    draw_segment(vertex2, point, "grey", "longdash") %>%
-    draw_segment(vertex3, vertex6, "grey", "longdash") %>%
-    draw_segment(vertex4, vertex5, "grey", "longdash") %>%
-    draw_segment(vertex4, point, "grey", "longdash") %>%
-    draw_segment(vertex5, vertex6, "grey", "longdash") %>%
-    draw_segment(vertex6, point, "grey", "longdash")
+    draw_line(rbind(vertex1, vertex2), "grey", "longdash") %>%
+    draw_line(rbind(vertex2, vertex3), "grey", "longdash") %>%
+    draw_line(rbind(vertex1, vertex4), "grey", "longdash") %>%
+    draw_line(rbind(vertex2, point), "grey", "longdash") %>%
+    draw_line(rbind(vertex3, vertex6), "grey", "longdash") %>%
+    draw_line(rbind(vertex4, vertex5), "grey", "longdash") %>%
+    draw_line(rbind(vertex4, point), "grey", "longdash") %>%
+    draw_line(rbind(vertex5, vertex6), "grey", "longdash") %>%
+    draw_line(rbind(vertex6, point), "grey", "longdash")
 }
 
 
 # 两个向量所张成的平行四边形
 draw_cross_mesh <- function(p, u, v, color = "lightgrey") {
-  mesh <- rbind(data.table(x = 0, y = 0, z = 0), u, v, vector_add(u, v))
+  mesh <- rbind(origin_3d, u, v, vector_add(u, v))
   p %>%
     add_mesh(
       data = mesh,
       facecolor = rep(color, nrow(mesh)), # 不能比三角面数少
-      x = ~x, y = ~y, z = ~z
     ) %>%
-    draw_segment(u, vector_add(u, v), color = "grey") %>%
-    draw_segment(v, vector_add(u, v), color = "grey")
+    draw_line(rbind(u, vector_add(u, v)), color = "grey") %>%
+    draw_line(rbind(v, vector_add(u, v)), color = "grey")
 }

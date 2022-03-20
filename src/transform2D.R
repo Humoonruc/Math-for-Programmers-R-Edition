@@ -7,8 +7,6 @@ translate <- function(points, translation) {
   variable_names <- c("b", colnames(points))
   m1 <- c(0, t(translation)) # 第一列
   m2 <- rbind(t(rep(0, n)), diag(n)) # 后n列
-  ## m1 <- rep(0, (n + 1)) %>% t() # 第一行
-  ## m2 <- cbind(t(translation), diag(n)) # 后n行
   m_translate <- cbind(m1, m2)
 
   m_points <- points %>%

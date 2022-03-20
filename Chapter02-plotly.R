@@ -105,23 +105,16 @@ possible_space <- map2_dfr(
 
 p <- create_canvas_2d() %>%
   draw_point(possible_space, color = "grey") %>%
-  draw_line(z_max, z_min, color = "tomato", linetype = "dash") %>%
+  draw_line(rbind(z_max, z_min), color = "tomato", linetype = "dash") %>%
   draw_arrow_2d(data.table(x = 0, y = 0), z, color = "red") %>%
-  add_text(
-    x = -1, y = 1, text = "<b>(-1,1)</b>",
-    textfont = list(color = "red", size = 16),
-    textposition = "top right"
-  ) %>%
-  draw_line(v_max, v_min, color = "royalblue", linetype = "dash", ) %>%
+  draw_text(z, text = plotly::TeX("\\boldsymbol{z}=(-1,1)"), color = "red") %>%
+  draw_line(rbind(v_max, v_min), color = "royalblue", linetype = "dash", ) %>%
   draw_arrow_2d(data.table(x = 0, y = 0), v, color = "blue") %>%
-  add_text(
-    x = 1, y = 1, text = "<b>(1,1)</b>",
-    textfont = list(color = "blue", size = 16),
-    textposition = "top right"
-  ) %>%
+  draw_text(v, text = plotly::TeX("\\boldsymbol{v}=(1,1)"), color = "blue") %>%
   layout(
-    title = list(text = "space of linear combination")
-  )
+    title = list(text = plotly::TeX("r\\boldsymbol{z} + s\\boldsymbol{v}, r\\in (-3,3), s\\in (-2,2)"))
+  ) %>%
+  config(mathjax = "cdn")
 p
 saveWidget(p, "./img/possible-space.html", selfcontained = F, libdir = "lib")
 
@@ -132,7 +125,10 @@ saveWidget(p, "./img/possible-space.html", selfcontained = F, libdir = "lib")
 
 # flower
 i <- 0:1000
-points_polor <- data.table(r = cos(i * pi / 100), theta = 2 * pi * i / 1000)
+points_polor <- data.table(
+  r = cos(i * pi / 100),
+  theta = 2 * pi * i / 1000
+)
 points <- points_polor %>% to_cartesian_2d()
 
 p <- create_canvas_2d() %>%
@@ -145,7 +141,7 @@ saveWidget(p, "./img/flower.html", selfcontained = F, libdir = "lib")
 
 
 # rotate dinosaur
-dinosaur_rotated <- rotate(dinosaur, pi / 4)
+dinosaur_rotated <- rotate_2d(dinosaur, pi / 4)
 
 p <- create_canvas_2d() %>%
   draw_point(dinosaur) %>%
@@ -164,7 +160,7 @@ regular_polygon <- function(n) {
   0:(n - 1) %>%
     map(.f = \(i) {
       data.table(x = 1, y = 0) %>%
-        rotate(2 * pi * i / n)
+        rotate_2d(2 * pi * i / n)
     }) %>%
     reduce(.f = rbind)
 }
