@@ -8,12 +8,9 @@ library(htmlwidgets)
 
 
 ## import functions
-source("./src/plot2D-plotly.R")
-source("./src/plot3D.R")
-source("./src/calculate2D.R")
-source("./src/calculate3D.R")
-source("./src/transform2D.R")
-source("./src/transform3D.R")
+source("./src/plot-element.R")
+source("./src/vector-calculate.R")
+source("./src/linear-transform.R")
 
 
 ## initiate canvas
@@ -228,45 +225,14 @@ saveWidget(p, "./img/3d-unit-normal.html", selfcontained = F, libdir = "lib")
 ## base1 <- data.table(x = 1, y = 0, z = 0)
 ## base2 <- data.table(x = 0, y = 1, z = 0)
 
-# 任意光源
+# base1 和 base2 是与观察者视线垂直的平面的一组基
 base1 <- data.table(x = 8 / 9, y = -4 / 9, z = 1 / 9)
 base2 <- data.table(x = 1 / sqrt(26), y = 3 / sqrt(26), z = 4 / sqrt(26))
+# 而光源向量并不一定与观察者的视线重合，所以其实光源向量是任意的
 lightsource <- cross_product(base1, base2)
 
 
-visible_faces <- octahedron_face %>%
-  bright_faces(lightsource)
-
-# 用角度表示亮度，范围为[0, pi/2)
-face_brightness <- visible_faces %>%
-  Map(face_unit_normal, .) %>%
-  Map(function(normal) {
-    angle_between(normal, lightsource)
-  }, .)
-
-faces_2d <- project_polytope(visible_faces, base1, base2)
-
-
-p <-
-  create_canvas_2d() %>%
-  reduce2(
-    faces_2d, face_brightness,
-    function(plot, face, brightness) {
-      plot %>%
-        draw_polygon(
-          face,
-          # gray()将[1,0]映射到白色至黑色的灰色带上
-          # 将brightness映射到[1,0]后，再适当放缩
-          # 距离极端的黑白两色远一点
-          fill = (((1 - brightness * 2 / pi) - 0.5) / 2 + 0.5) %>% gray()
-        )
-    },
-    .init = .
-  ) %>%
-  layout(
-    title = list(text = plotly::TeX("\\text{lightsource vector}=(-0.4140, -0.6755, 0.6101)"))
-  ) %>%
-  config(mathjax = "cdn")
+p <- render_polytope(octahedron_face, lightsource, base1, base2)
 p
 # 有一个面非常亮，近乎垂直于光源向量
 saveWidget(p, "./img/3d-project-to-2d.html", selfcontained = F, libdir = "lib")

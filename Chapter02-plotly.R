@@ -8,14 +8,13 @@ library(htmlwidgets)
 
 
 # import source
-source("./src/plot2D-plotly.R")
-source("./src/calculate2D.R")
-source("./src/transform2D.R")
+source("./src/plot-element.R")
+source("./src/vector-calculate.R")
+source("./src/linear-transform.R")
 
 
 # data
 dinosaur <- fread("data/data.csv")
-
 
 ###############################################################
 ## plotting vectors
@@ -24,7 +23,7 @@ dinosaur <- fread("data/data.csv")
 # plot and save
 p <- create_canvas_2d() %>%
   draw_point(dinosaur) %>%
-  draw_polygon(dinosaur) %>%
+  draw_polygon(dinosaur, color = "blue", opacity = 0.3) %>%
   layout(
     title = list(text = "A dinasaur: scatters and lines")
   )
@@ -38,9 +37,9 @@ dinosaur2 <- dinosaur %>%
 
 p <- create_canvas_2d() %>%
   draw_point(dinosaur) %>%
-  draw_polygon(dinosaur) %>%
+  draw_polygon(dinosaur, color = "blue", opacity = 0.3) %>%
   draw_point(dinosaur2, color = "red") %>%
-  draw_polygon(dinosaur2, color = "red") %>%
+  draw_polygon(dinosaur2, color = "red", opacity = 0.3) %>%
   reduce(
     .x = 1:nrow(dinosaur),
     .f = function(p, i) {
@@ -66,7 +65,7 @@ for (dx in -4:4 * 12) {
     translation <- data.table(x = dx, y = dy)
     little_dinosaur <- dinosaur %>% translate(translation)
     p <- p %>%
-      draw_polygon(little_dinosaur)
+      draw_polygon(little_dinosaur, color = "blue", opacity = 0.5)
   }
 }
 p
@@ -105,10 +104,10 @@ possible_space <- map2_dfr(
 
 p <- create_canvas_2d() %>%
   draw_point(possible_space, color = "grey") %>%
-  draw_line(rbind(z_max, z_min), color = "tomato", linetype = "dash") %>%
+  draw_line(rbind(z_max, z_min), color = "tomato", linetype = "dash", showlegend = FALSE) %>%
   draw_arrow_2d(data.table(x = 0, y = 0), z, color = "red") %>%
   draw_text(z, text = plotly::TeX("\\boldsymbol{z}=(-1,1)"), color = "red") %>%
-  draw_line(rbind(v_max, v_min), color = "royalblue", linetype = "dash", ) %>%
+  draw_line(rbind(v_max, v_min), color = "royalblue", linetype = "dash", showlegend = FALSE) %>%
   draw_arrow_2d(data.table(x = 0, y = 0), v, color = "blue") %>%
   draw_text(v, text = plotly::TeX("\\boldsymbol{v}=(1,1)"), color = "blue") %>%
   layout(
@@ -132,7 +131,7 @@ points_polor <- data.table(
 points <- points_polor %>% to_cartesian_2d()
 
 p <- create_canvas_2d() %>%
-  draw_polygon(points, color = "blue") %>%
+  draw_polygon(points, color = "blue", fill = "yellow", opacity = 0.5) %>%
   layout(
     title = list(text = "flower consists 1,000 points")
   )
@@ -145,9 +144,9 @@ dinosaur_rotated <- rotate_2d(dinosaur, pi / 4)
 
 p <- create_canvas_2d() %>%
   draw_point(dinosaur) %>%
-  draw_polygon(dinosaur) %>%
+  draw_polygon(dinosaur, color = "blue", opacity = 0.3) %>%
   draw_point(dinosaur_rotated, color = "red") %>%
-  draw_polygon(dinosaur_rotated, color = "red") %>%
+  draw_polygon(dinosaur_rotated, color = "red", opacity = 0.3) %>%
   layout(
     title = list(text = "dinosaur: 2D rotation")
   )
@@ -167,7 +166,7 @@ regular_polygon <- function(n) {
 heptagon <- regular_polygon(7)
 p <- create_canvas_2d() %>%
   draw_point(heptagon) %>%
-  draw_polygon(heptagon) %>%
+  draw_polygon(heptagon, color = "blue", opacity = 0.5) %>%
   layout(
     title = list(text = "heptagon: 2D rotation")
   )
