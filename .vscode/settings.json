@@ -1,0 +1,10 @@
+{
+  "commentTranslate.hover.enabled": true,
+  "workbench.colorCustomizations": {
+    "editor.lineHighlightBackground": "#1073cf2d",
+    "editor.lineHighlightBorder": "#9fced11f",
+    "activityBar.background": "#3B2B06",
+    "titleBar.activeBackground": "#523C08",
+    "titleBar.activeForeground": "#FEFAF1"
+  }
+}

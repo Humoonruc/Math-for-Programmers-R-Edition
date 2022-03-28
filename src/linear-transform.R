@@ -24,14 +24,13 @@ translate <- function(points, translation) {
     select(b, everything()) %>%
     t()
 
-  return(
-    m_translate %*% m_points %>%
-      t() %>%
-      as.data.frame() %>%
-      set_colnames(variable_names) %>%
-      select(-b) %>%
-      as.data.table()
-  )
+  # return value
+  m_translate %*% m_points %>%
+    t() %>%
+    as.data.frame() %>%
+    set_colnames(variable_names) %>%
+    select(-b) %>%
+    as.data.table()
 }
 
 
@@ -48,13 +47,12 @@ scale <- function(points, scalar) {
     as.matrix() %>%
     t()
 
-  return(
-    m_scale %*% m_points %>%
-      t() %>%
-      as.data.frame() %>%
-      set_colnames(variable_names) %>%
-      as.data.table()
-  )
+  # return value
+  m_scale %*% m_points %>%
+    t() %>%
+    as.data.frame() %>%
+    set_colnames(variable_names) %>%
+    as.data.table()
 }
 
 
@@ -79,13 +77,12 @@ rotate_2d <- function(points, rotation) {
     as.matrix() %>%
     t()
 
-  return(
-    m_rotate %*% m_points %>%
-      t() %>%
-      as.data.frame() %>%
-      set_colnames(variable_names) %>%
-      as.data.table()
-  )
+  # return value
+  m_rotate %*% m_points %>%
+    t() %>%
+    as.data.frame() %>%
+    set_colnames(variable_names) %>%
+    as.data.table()
 }
 
 
@@ -110,14 +107,15 @@ project <- function(points,
 
 # 三维多面体投影到二维
 # polytope是多个三角面数据框组成的list
-project_polytope <- function(polytope,
-                             base1 = data.table(x = 1, y = 0, z = 0),
-                             base2 = data.table(x = 0, y = 1, z = 0)) {
+project_polytope <- function(polytope, ...) {
   polytope %>%
-    Map(function(face) {
-      project(face, base1 = base1, base2 = base2)
-    }, .)
+    map(function(face) project(face, ...))
 }
+
+## 测试：
+## points <- list(data.table(x = 1, y = 1, z = 1), data.table(x = 2, y = 2, z = 2))
+## project(points[[1]])
+## project_polytope(points)
 
 
 #############################################################
@@ -128,45 +126,31 @@ project_polytope <- function(polytope,
 # 即法向量与光源向量的点乘为正（假设光源投来平行光）
 bright_faces <- function(faces,
                          lightsource = data.table(x = 0, y = 0, z = 1)) {
-  Filter(
-    function(face) {
-      normal <- face_normal(face) # 法向量
-      dot_product(normal, lightsource) > 0
-    },
-    faces
-  )
+  faces %>%
+    keep(~ dot_product(face_normal(.x), lightsource) > 0)
 }
 
+
 # 渲染三维多面体
-# # base1, base2是二维平面的一组正交基的三维坐标
-render_polytope <- function(polytope, lightsource, base1, base2) {
+# ... 是二维平面的一组正交基的三维坐标
+render_polytope <- function(polytope, lightsource, ...) {
   visible_faces <- polytope %>% bright_faces(lightsource)
 
-  faces_2d <- project_polytope(visible_faces, base1, base2)
+  faces_2d <- project_polytope(visible_faces, ...)
   face_brightness <- visible_faces %>%
-    Map(face_unit_normal, .) %>%
-    Map(function(normal) {
-      # 用角度表示亮度，此处范围为[0, pi/2)
-      angle_between(normal, lightsource)
-    }, .)
+    map(face_unit_normal) %>%
+    map(~ angle_between(.x, lightsource)) %>% # 用角度表示亮度，此处范围为[0, pi/2)
+    map(~ ((1 - .x * 2 / pi) - 0.5) / 2 + 0.5) # 归一化，然后以0.5为中心适当缩放，距离极端的黑白两色远一点
 
-  reduce2(
-    .x = faces_2d,
-    .y = face_brightness,
-    .f = function(plot, face, brightness) {
-      plot %>%
-        draw_polygon(
-          face,
-          # gray()将[1,0]映射到白色至黑色的灰色带上
-          # 将brightness映射到[1,0]后，再适当放缩
-          # 距离极端的黑白两色远一点
-          fill = (((1 - brightness * 2 / pi) - 0.5) / 2 + 0.5) %>% gray()
-        )
-    },
-    .init = create_canvas_2d()
-  ) %>%
-    layout(
-      title = list(text = plotly::TeX("\\text{lightsource vector}=(-0.4140, -0.6755, 0.6101)"))
-    ) %>%
-    config(mathjax = "cdn")
+  create_canvas_2d() %>%
+    reduce2(
+      .x = faces_2d,
+      .y = face_brightness,
+      .f = function(plot, face, brightness) {
+        plot %>%
+          draw_polygon(face, fill = brightness %>% gray())
+      },
+      # gray()将[1,0]映射到白色至黑色的灰色带上
+      .init = .
+    ) 
 }

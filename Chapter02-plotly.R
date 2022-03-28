@@ -1,10 +1,8 @@
-### Chapter02-plotly.R
+## Chapter02-plotly.R
 
-library(tidyverse)
-library(magrittr)
-library(data.table)
-library(plotly)
-library(htmlwidgets)
+
+# config
+source("./config/config.R")
 
 
 # import source
@@ -16,8 +14,13 @@ source("./src/linear-transform.R")
 # data
 dinosaur <- fread("data/data.csv")
 
+
+# export path
+export_path <- "./export/"
+
+
 ###############################################################
-## plotting vectors
+## 1 plotting vectors
 ###############################################################
 
 # plot and save
@@ -25,10 +28,15 @@ p <- create_canvas_2d() %>%
   draw_point(dinosaur) %>%
   draw_polygon(dinosaur, color = "blue", opacity = 0.3) %>%
   layout(
-    title = list(text = "A dinasaur: scatters and lines")
+    title = list(text = "A dinasaur: scatters and lines"),
+    xaxis = list(title = ""), yaxis = list(title = "")
   )
 p
-saveWidget(p, "./img/dinosaur.html", selfcontained = F, libdir = "lib")
+p %>%
+  saveWidget(
+    str_c(export_path, "dinosaur.html"),
+    selfcontained = F, libdir = "lib"
+  )
 
 
 # translation
@@ -37,9 +45,9 @@ dinosaur2 <- dinosaur %>%
 
 p <- create_canvas_2d() %>%
   draw_point(dinosaur) %>%
-  draw_polygon(dinosaur, color = "blue", opacity = 0.3) %>%
+  draw_polygon(dinosaur, color = "blue", opacity = 0.2) %>%
   draw_point(dinosaur2, color = "red") %>%
-  draw_polygon(dinosaur2, color = "red", opacity = 0.3) %>%
+  draw_polygon(dinosaur2, color = "red", opacity = 0.2) %>%
   reduce(
     .x = 1:nrow(dinosaur),
     .f = function(p, i) {
@@ -49,17 +57,22 @@ p <- create_canvas_2d() %>%
     .init = .
   ) %>%
   layout(
-    title = list(text = "2 dinasaurs: translation")
+    title = list(text = "2 dinasaurs: translation"),
+    xaxis = list(title = ""), yaxis = list(title = "")
   )
 p
-saveWidget(p, "./img/dinosaur-translation.html", selfcontained = F, libdir = "lib")
-
+p %>%
+  saveWidget(
+    str_c(export_path, "dinosaur-translation.html"),
+    selfcontained = F, libdir = "lib"
+  )
 
 # 81 只小恐龙
-p <- create_canvas_2d() %>%
-  layout(
-    title = list(text = "many dinasaurs: translation")
-  )
+p <- create_canvas_2d() %>% layout(
+  title = list(text = "many dinasaurs: translation"),
+  xaxis = list(title = ""), yaxis = list(title = "")
+)
+
 for (dx in -4:4 * 12) {
   for (dy in -4:4 * 10) {
     translation <- data.table(x = dx, y = dy)
@@ -68,9 +81,13 @@ for (dx in -4:4 * 12) {
       draw_polygon(little_dinosaur, color = "blue", opacity = 0.5)
   }
 }
-p
-saveWidget(p, "./img/dinosaur-multi.html", selfcontained = F, libdir = "lib")
 
+p
+p %>%
+  saveWidget(
+    str_c(export_path, "dinosaur-multi.html"),
+    selfcontained = F, libdir = "lib"
+  )
 
 ###############################################################
 ## vector arithmetic
@@ -97,26 +114,28 @@ v_min <- scale(v, -2)
 
 possible_space <- map2_dfr(
   .x = random_r, .y = random_s,
-  .f = \(x, y) {
-    vector_add(scale(z, x), scale(v, y))
-  }
+  .f = ~ vector_add(scale(z, .x), scale(v, .y))
 )
 
 p <- create_canvas_2d() %>%
   draw_point(possible_space, color = "grey") %>%
-  draw_line(rbind(z_max, z_min), color = "tomato", linetype = "dash", showlegend = FALSE) %>%
+  draw_line(rbind(z_max, z_min), color = "tomato", linetype = "dash") %>%
   draw_arrow_2d(data.table(x = 0, y = 0), z, color = "red") %>%
-  draw_text(z, text = plotly::TeX("\\boldsymbol{z}=(-1,1)"), color = "red") %>%
-  draw_line(rbind(v_max, v_min), color = "royalblue", linetype = "dash", showlegend = FALSE) %>%
+  draw_text(z, texts = plotly::TeX("\\boldsymbol{z}=(-1,1)"), color = "red") %>%
+  draw_line(rbind(v_max, v_min), color = "royalblue", linetype = "dash") %>%
   draw_arrow_2d(data.table(x = 0, y = 0), v, color = "blue") %>%
-  draw_text(v, text = plotly::TeX("\\boldsymbol{v}=(1,1)"), color = "blue") %>%
+  draw_text(v, texts = plotly::TeX("\\boldsymbol{v}=(1,1)"), color = "blue") %>%
   layout(
-    title = list(text = plotly::TeX("r\\boldsymbol{z} + s\\boldsymbol{v}, r\\in (-3,3), s\\in (-2,2)"))
+    title = list(text = plotly::TeX("r\\boldsymbol{z} + s\\boldsymbol{v}, r\\in (-3,3), s\\in (-2,2)")),
+    xaxis = list(title = ""), yaxis = list(title = "")
   ) %>%
   config(mathjax = "cdn")
 p
-saveWidget(p, "./img/possible-space.html", selfcontained = F, libdir = "lib")
-
+p %>%
+  saveWidget(
+    str_c(export_path, "possible-space.html"),
+    selfcontained = F, libdir = "lib"
+  )
 
 ###############################################################
 ## trigonometry and polar coordinate system
@@ -131,12 +150,18 @@ points_polor <- data.table(
 points <- points_polor %>% to_cartesian_2d()
 
 p <- create_canvas_2d() %>%
-  draw_polygon(points, color = "blue", fill = "yellow", opacity = 0.5) %>%
+  draw_polygon(points, color = "blue", fill = "yellow", opacity = 0.2) %>%
   layout(
-    title = list(text = "flower consists 1,000 points")
-  )
+    title = list(text = "flower consists 1,000 points"),
+    xaxis = list(title = ""), yaxis = list(title = "")
+  ) %>%
+  config(mathjax = "cdn")
 p
-saveWidget(p, "./img/flower.html", selfcontained = F, libdir = "lib")
+p %>%
+  saveWidget(
+    str_c(export_path, "flower.html"),
+    selfcontained = F, libdir = "lib"
+  )
 
 
 # rotate dinosaur
@@ -148,27 +173,34 @@ p <- create_canvas_2d() %>%
   draw_point(dinosaur_rotated, color = "red") %>%
   draw_polygon(dinosaur_rotated, color = "red", opacity = 0.3) %>%
   layout(
-    title = list(text = "dinosaur: 2D rotation")
+    title = list(text = "dinosaur: 2D rotation"),
+    xaxis = list(title = ""), yaxis = list(title = "")
   )
 p
-saveWidget(p, "./img/dinosaur-rotation.html", selfcontained = F, libdir = "lib")
-
+p %>%
+  saveWidget(
+    str_c(export_path, "dinosaur-rotation.html"),
+    selfcontained = F, libdir = "lib"
+  )
 
 # 生成正n边形
 regular_polygon <- function(n) {
   0:(n - 1) %>%
-    map(.f = \(i) {
-      data.table(x = 1, y = 0) %>%
-        rotate_2d(2 * pi * i / n)
-    }) %>%
-    reduce(.f = rbind)
+    map_dfr(~ data.table(x = 1, y = 0) %>% rotate_2d(2 * pi * .x / n))
 }
+
 heptagon <- regular_polygon(7)
+
 p <- create_canvas_2d() %>%
   draw_point(heptagon) %>%
   draw_polygon(heptagon, color = "blue", opacity = 0.5) %>%
   layout(
-    title = list(text = "heptagon: 2D rotation")
+    title = list(text = "heptagon: 2D rotation"),
+    xaxis = list(title = ""), yaxis = list(title = "")
   )
 p
-saveWidget(p, "./img/regular-polygon.html", selfcontained = F, libdir = "lib")
+p %>%
+  saveWidget(
+    str_c(export_path, "regular-polygon.html"),
+    selfcontained = F, libdir = "lib"
+  )

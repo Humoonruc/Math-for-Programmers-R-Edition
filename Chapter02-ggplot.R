@@ -1,23 +1,23 @@
-### Chapter02-ggplot.R
+## Chapter02-ggplot.R
 
-library(tidyverse)
-library(magrittr)
-library(data.table)
-library(plotly)
-library(htmlwidgets)
 
-# import source
-source("./src/plot2D-ggplot.R")
-source("./src/calculate2D.R")
-source("./src/transform2D.R")
+# config
+source("./config/config.R")
+
+
+# import modules
+source("./src/ggplot.R")
+source("./src/vector-calculate.R")
+source("./src/linear-transform.R")
 
 
 # data
 dinosaur <- fread("./data/data.csv")
+dinosaur
 
 
 ###############################################################
-## plotting vectors
+## 1 plotting vectors
 ###############################################################
 
 # plot and save
@@ -27,9 +27,7 @@ p <- create_canvas() %>%
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
 p
-p %>%
-  ggplotly() %>%
-  saveWidget("./img/ggplot/dinosaur.html", selfcontained = F, libdir = "lib")
+ggsave("./export/ggplot/dinosaur.png", width = 6, height = 6, dpi = 600)
 
 
 # vector translation
@@ -43,7 +41,7 @@ create_canvas() %>%
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
 
-ggsave("./img/ggplot/dinosaur2.png", width = 6, height = 6, dpi = 600)
+ggsave("./export/ggplot/dinosaur2.png", width = 6, height = 6, dpi = 600)
 
 
 # 81 只小恐龙
@@ -59,23 +57,41 @@ p <- data.table(x = 0, y = 0) %>%
     panel.grid.minor = element_blank()
   )
 
-for (dx in -4:4 * 12) {
-  for (dy in -4:4 * 10) {
-    translation <- c(dx, dy)
-    little_dinosaur <- dinosaur %>% translate(translation)
-    p <- p %>% draw_polygon(little_dinosaur)
+x_domain <- -4:4 * 12
+y_domain <- -4:4 * 10
+
+# 循环写法一
+for (dx in x_domain) {
+  for (dy in y_domain) {
+    translation <- data.table(x = dx, y = dy)
+    p <- p %>% draw_polygon(dinosaur %>% translate(translation))
   }
 }
+
+# 循环写法二
+# translation <- x_domain %>% map_dfr(function(dx) {
+#   y_domain %>% map_dfr(function(dy) {
+#     data.table(x = dx, y = dy)
+#   })
+# })
+
+# p <- 1:nrow(translation) %>% reduce(
+#   .f = function(plot, k) {
+#     plot %>% draw_polygon(dinosaur %>% translate(translation[k, ]))
+#   },
+#   .init = p
+# )
+
 
 p +
   scale_x_continuous(breaks = seq(-100, 100, 20)) +
   scale_y_continuous(breaks = seq(-100, 100, 20))
 
-ggsave("./img/ggplot/multi-dinosaur.png", width = 6, height = 6, dpi = 600)
+ggsave("./export/ggplot/multi-dinosaur.png", width = 6, height = 6, dpi = 600)
 
 
 ###############################################################
-## vector arithmetic
+## 2 vector arithmetic
 ###############################################################
 
 scale(dinosaur, 5)
@@ -92,37 +108,35 @@ n <- 2000 # 样本容量
 random_r <- runif(n, -3, 3)
 random_s <- runif(n, -1, 1)
 
-possible_space <- map2_dfr(random_r, random_s, function(x, y) {
-  vector_add(scale(z, x), scale(v, y))
-})
+possible_space <- map2_dfr(random_r, random_s, ~ vector_add(scale(z, .x), scale(v, .y)))
 
 create_canvas() %>%
   draw_scatter(possible_space, color = "black") +
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
 
-ggsave("./img/ggplot/possible-space.png", width = 6, height = 6, dpi = 600)
+ggsave("./export/ggplot/possible-space.png", width = 6, height = 6, dpi = 600)
 
 
 ###############################################################
-## trigonometry and polar coordinate system
+## 3 trigonometry and polar coordinate system
 ###############################################################
 
 # flower
 i <- 0:1000
 points_polor <- data.table(r = cos(i * pi / 100), theta = 2 * pi * i / 1000)
-points <- points_polor %>% to_cartesian()
+points <- points_polor %>% to_cartesian_2d()
 
 create_canvas() %>%
   draw_polygon(points, color = "blue") +
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
 
-ggsave("./img/ggplot/flower.png", width = 6, height = 6, dpi = 600)
+ggsave("./export/ggplot/flower.png", width = 6, height = 6, dpi = 600)
 
 
 # rotate dinosaur
-dinosaur_rotated <- rotate(dinosaur, pi / 4)
+dinosaur_rotated <- rotate_2d(dinosaur, pi / 4)
 
 create_canvas() %>%
   draw_scatter(dinosaur) %>%
@@ -132,20 +146,18 @@ create_canvas() %>%
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
 
-ggsave("./img/ggplot/dinosaur_rotated.png", width = 6, height = 6, dpi = 600)
+ggsave("./export/ggplot/dinosaur_rotated.png", width = 6, height = 6, dpi = 600)
 
 
 ###############################################################
-## linear transforming
+## 4 linear transforming
 ###############################################################
 
 # 生成正n边形
 regular_polygon <- function(n) {
-  l_points <- list(data.table(x = 1, y = 0))
-  for (i in 1:(n - 1)) {
-    l_points[[i + 1]] <- l_points[[1]] %>% rotate(2 * pi * i / n)
-  }
-  l_points %>% reduce(\(p1, p2) rbind(p1, p2)) # 匿名函数
+  vertex0 <- data.table(x = 1, y = 0)
+  0:(n - 1) %>%
+    map_dfr(~ vertex0 %>% rotate_2d(2 * pi * .x / n))
 }
 
 n <- 7
@@ -156,4 +168,4 @@ create_canvas() %>%
   scale_x_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL) +
   scale_y_continuous(breaks = seq(-10, 10, 1), minor_breaks = NULL)
 
-ggsave("./img/ggplot/regular-polygon.png", width = 6, height = 6, dpi = 600)
+ggsave("./export/ggplot/regular-polygon.png", width = 6, height = 6, dpi = 600)

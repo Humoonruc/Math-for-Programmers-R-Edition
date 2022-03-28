@@ -13,13 +13,12 @@
 
 # 建立2d画布（坐标系）
 axis_template <- list(
+  nticks = 20,
   zeroline = TRUE,
-  ticks = "outside",
   gridcolor = "white",
-  gridwidth = 1.5,
-  nticks = 20
+  gridwidth = 1
 )
-create_canvas_2d <- function(title_x = "", title_y = "", showlegend = FALSE) {
+create_canvas_2d <- function(showlegend = FALSE, ...) {
   plot_ly(
     data = data.table(x = 0, y = 0),
     x = ~x, y = ~y,
@@ -34,18 +33,17 @@ create_canvas_2d <- function(title_x = "", title_y = "", showlegend = FALSE) {
         pad = list(t = 35)
       ),
       margin = list(b = 80, l = 30, r = 20),
-      plot_bgcolor = "#ebebeb",
-      ## legend = list(
-      ##   y = 0.5
-      ## ),
-      xaxis = c(axis_template, title = title_x),
+      paper_bgcolor = "white",
+      plot_bgcolor = "#e5ecf6",
+      xaxis = c(axis_template),
       yaxis = c(axis_template, list(
         scaleanchor = "x", # 使y轴与x轴的比例尺相同
-        scaleratio = 1, # 从而grid为方格
-        title = title_y
+        scaleratio = 1 # 从而grid为方格
       ))
     )
 }
+
+# create_canvas_2d()
 
 # 建立3d画布（坐标系）
 origin_3d <- data.table(x = 0, y = 0, z = 0) # 3d 原点
@@ -211,11 +209,11 @@ create_canvas_3d <- function(range,
 #############################################################
 
 # 画点
-draw_point <- function(p, points, color = "blue", name = "") {
+draw_point <- function(p, points, color = "blue", ...) {
   p %>% add_markers(
     data = points,
-    name = name,
-    marker = list(size = 4, color = color)
+    marker = list(size = 4, color = color),
+    ...
   )
 }
 
@@ -223,16 +221,16 @@ draw_point <- function(p, points, color = "blue", name = "") {
 draw_line <- function(p, points,
                       color = "royalblue",
                       linetype = "solid",
-                      width = 1.5, name = "", showlegend = FALSE) {
+                      width = 1.5, showlegend = FALSE, ...) {
   p %>% add_lines(
     data = points,
-    name = name,
     showlegend = showlegend,
     line = list(
       color = color,
       width = width,
       dash = linetype
-    )
+    ),
+    ...
   )
 }
 
@@ -267,13 +265,13 @@ draw_box_3d <- function(p, point) {
 
 # 画箭头及注释 annotation(适用于2d图)
 draw_arrow_2d <- function(p, begin, end,
-                          color = "dimgrey",
-                          linetype = "solid",
-                          width = 2, name = "", showlegend = FALSE) {
+                          color = "dimgrey", width = 1,
+                          showlegend = FALSE, ...) {
   p %>%
-    draw_line(rbind(begin, end),
-      color = color, linetype = linetype, width = width, name = name,
-      showlegend = showlegend
+    draw_line(
+      points = rbind(begin, end),
+      color = color, width = width,
+      showlegend = showlegend, ...
     ) %>%
     add_annotations(
       x = end$x, # 箭头坐标
@@ -337,19 +335,19 @@ draw_text <- function(p, points, texts,
 
 # 绘制多边形，主要作用是填充色块
 # 可通过fillcolor属性定义面的颜色
-draw_polygon <- function(p, points, fill = "grey", color = "black", opacity = 1) {
+draw_polygon <- function(p, points, fill = "grey", color = "black", ...) {
   p %>%
     add_polygons(
       # 该函数不会自动补画第一个端点和最后一个端点的连线
       data = points,
       fillcolor = fill,
       line = list(color = color, width = 1),
-      opacity = opacity
+      ...
     ) %>%
     add_lines(
       data = points[c(1, .N), ],
       line = list(color = color, width = 1),
-      opacity = opacity
+      ...
     )
 }
 
@@ -372,7 +370,8 @@ draw_face_3d <- function(p, points,
         color = "grey",
         width = width,
         dash = linetype
-      )
+      ),
+      opacity = opacity
     )
 }
 
