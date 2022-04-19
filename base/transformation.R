@@ -14,33 +14,27 @@
 # 10 再平面上渲染三维物体
 
 
+source("./config/config.R")
 
-v1 <- c(1, 2)
-v2 <- c(3, 4)
-v3 <- c(5, 6)
-v4 <- c(7, 8)
+# 二维平面中四个点
+point1 <- c(1, 2)
+point2 <- c(3, 4)
+point3 <- c(5, 4)
+point4 <- c(7, 2)
 
-vs <- list(v1, v2, v3, v4) %>%
-  reduce(~ rbind(.x, .y))
-
-vs
-nrow(vs)
-
+# 它们的集合，组织为一个矩阵，代表该多边形（是个梯形）
+polygon <- c(v1, v2, v3, v4) %>% matrix(nrow = 2)
 
 
 #############################################################
 # 1 向量加减法
 #############################################################
 
-# 普通的加减直接用运算符
-
-vector_sum <- function(vs) {
-  vs %>% apply(2, sum)
-}
+# 普通的加减直接用运算符，R 默认支持向量化操作
 
 # 两点连线的中点
-vector_midpoiot <- function(v1, v2) {
-  v1 / 2 + v2 / 2
+midpoiot <- function(v1, v2) {
+  (v1 + v2) / 2
 }
 
 #############################################################
@@ -48,7 +42,7 @@ vector_midpoiot <- function(v1, v2) {
 #############################################################
 
 get_length <- function(v) {
-  sum(v * v) %>%
+  sum(v^2) %>%
     sqrt()
 }
 
@@ -58,17 +52,18 @@ get_distance <- function(v1, v2) {
 }
 
 # 计算多边形周长
-get_perimeter <- function(points) {
-  n <- nrow(points)
-  s <- 0
+get_perimeter <- function(polygon) {
+  n <- ncol(polygon)
+  perimeter <- 0
   for (i in 1:n) {
     if (i < n) {
-      s <- s + get_distance(points[i, ], points[i + 1, ])
+      perimeter <- perimeter + get_distance(polygon[, i], polygon[, i + 1])
+      # 此处，矩阵的 subset 自动转换为最简单的数据类型，即向量
     } else {
-      s <- s + get_distance(points[n, ], points[1, ])
+      perimeter <- perimeter + get_distance(polygon[, n], polygon[, 1])
     }
   }
-  return(s)
+  return(perimeter)
 }
 
 
