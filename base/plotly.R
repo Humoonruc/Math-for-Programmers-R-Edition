@@ -1,5 +1,9 @@
 ## plot-element.R
 
+
+# 传入的数据是 matrix，将其转换为 df
+
+
 # 1 初始化画布
 # 2 点和线
 # 3 箭头和标注
@@ -17,6 +21,7 @@ axis_template <- list(
   gridcolor = "white",
   gridwidth = 1
 )
+
 create_canvas_2d <- function(showlegend = FALSE, ...) {
   plot_ly(
     data = data.table(x = 0, y = 0),
@@ -45,7 +50,6 @@ create_canvas_2d <- function(showlegend = FALSE, ...) {
 # create_canvas_2d()
 
 # 建立3d画布（坐标系）
-origin_3d <- data.table(x = 0, y = 0, z = 0) # 3d 原点
 create_canvas_3d <- function(range,
                              title_x = "<b>x</b>",
                              title_y = "<b>y</b>",
@@ -68,7 +72,7 @@ create_canvas_3d <- function(range,
 
 
   plot_ly(
-    data = origin_3d,
+    data = data.table(x = 0, y = 0, z = 0),
     x = ~x, y = ~y, z = ~z,
     showlegend = F
   ) %>%
@@ -208,21 +212,49 @@ create_canvas_3d <- function(range,
 #############################################################
 
 # 画点
-draw_point <- function(p, points, color = "blue", ...) {
+draw_points <- function(p, points, color = "blue", ...) {
+  if (is.matrix(points)) {
+    if (nrow(points) == 2) {
+      data <- data.table(x = points[1, ], y = points[2, ])
+    } else if (nrow(points) == 3) {
+      data <- data.table(x = points[1, ], y = points[2, ], z = points[3, ])
+    }
+  } else { # 非矩阵，只是一个向量
+    if (length(points) == 2) {
+      data <- data.table(x = points[1], y = points[2])
+    } else {
+      data <- data.table(x = points[1], y = points[2], z = points[3])
+    }
+  }
+
   p %>% add_markers(
-    data = points,
+    data = data,
     marker = list(size = 4, color = color),
     ...
   )
 }
 
 # 画线段
-draw_line <- function(p, points,
-                      color = "royalblue",
-                      linetype = "solid",
-                      width = 1.5, showlegend = FALSE, ...) {
+draw_lines <- function(p, points,
+                       color = "royalblue",
+                       linetype = "solid",
+                       width = 1.5, showlegend = FALSE, ...) {
+  if (is.matrix(points)) {
+    if (nrow(points) == 2) {
+      data <- data.table(x = points[1, ], y = points[2, ])
+    } else if (nrow(points) == 3) {
+      data <- data.table(x = points[1, ], y = points[2, ], z = points[3, ])
+    }
+  } else { # 非矩阵，只是一个向量
+    if (length(points) == 2) {
+      data <- data.table(x = points[1], y = points[2])
+    } else {
+      data <- data.table(x = points[1], y = points[2], z = points[3])
+    }
+  }
+
   p %>% add_lines(
-    data = points,
+    data = data,
     showlegend = showlegend,
     line = list(
       color = color,
@@ -233,28 +265,29 @@ draw_line <- function(p, points,
   )
 }
 
+
 # 画3d盒子
 draw_box_3d <- function(p, point) {
-  x <- point$x
-  y <- point$y
-  z <- point$z
-  vertex1 <- data.table(x = x, y = 0, z = 0)
-  vertex2 <- data.table(x = x, y = y, z = 0)
-  vertex3 <- data.table(x = 0, y = y, z = 0)
-  vertex4 <- data.table(x = x, y = 0, z = z)
-  vertex5 <- data.table(x = 0, y = 0, z = z)
-  vertex6 <- data.table(x = 0, y = y, z = z)
+  x <- point[1]
+  y <- point[2]
+  z <- point[3]
+  vertex1 <- c(x = x, y = 0, z = 0)
+  vertex2 <- c(x = x, y = y, z = 0)
+  vertex3 <- c(x = 0, y = y, z = 0)
+  vertex4 <- c(x = x, y = 0, z = z)
+  vertex5 <- c(x = 0, y = 0, z = z)
+  vertex6 <- c(x = 0, y = y, z = z)
 
   p %>%
-    draw_line(rbind(vertex1, vertex2), "grey", "longdash") %>%
-    draw_line(rbind(vertex2, vertex3), "grey", "longdash") %>%
-    draw_line(rbind(vertex1, vertex4), "grey", "longdash") %>%
-    draw_line(rbind(vertex2, point), "grey", "longdash") %>%
-    draw_line(rbind(vertex3, vertex6), "grey", "longdash") %>%
-    draw_line(rbind(vertex4, vertex5), "grey", "longdash") %>%
-    draw_line(rbind(vertex4, point), "grey", "longdash") %>%
-    draw_line(rbind(vertex5, vertex6), "grey", "longdash") %>%
-    draw_line(rbind(vertex6, point), "grey", "longdash")
+    draw_lines(cbind(vertex1, vertex2), "grey", "longdash") %>%
+    draw_lines(cbind(vertex2, vertex3), "grey", "longdash") %>%
+    draw_lines(cbind(vertex1, vertex4), "grey", "longdash") %>%
+    draw_lines(cbind(vertex2, point), "grey", "longdash") %>%
+    draw_lines(cbind(vertex3, vertex6), "grey", "longdash") %>%
+    draw_lines(cbind(vertex4, vertex5), "grey", "longdash") %>%
+    draw_lines(cbind(vertex4, point), "grey", "longdash") %>%
+    draw_lines(cbind(vertex5, vertex6), "grey", "longdash") %>%
+    draw_lines(cbind(vertex6, point), "grey", "longdash")
 }
 
 
@@ -267,23 +300,23 @@ draw_arrow_2d <- function(p, begin, end,
                           color = "dimgrey", width = 1,
                           showlegend = FALSE, ...) {
   p %>%
-    draw_line(
-      points = rbind(begin, end),
+    draw_lines(
+      points = cbind(begin, end),
       color = color, width = width,
       showlegend = showlegend, ...
     ) %>%
     add_annotations(
-      x = end$x, # 箭头坐标
-      y = end$y,
+      x = end[1], # 箭头坐标
+      y = end[2],
       xref = "x",
       yref = "y",
-      ax = 0.1 * begin$x + 0.9 * end$x, # 箭尾坐标
-      ay = 0.1 * begin$y + 0.9 * end$y,
+      ax = 0.1 * begin[1] + 0.9 * end[1], # 箭尾坐标
+      ay = 0.1 * begin[2] + 0.9 * end[2],
       axref = "x",
       ayref = "y",
       arrowcolor = color,
       arrowhead = 2, # 箭头类型
-      arrowsize = 1.5,
+      arrowsize = 1,
       arrowwidth = 1.5,
       text = ""
     )
@@ -295,15 +328,15 @@ draw_arrow_3d <- function(p, begin, end,
                           linetype = "solid",
                           width = 2, showlegend = FALSE) {
   p %>%
-    draw_line(rbind(begin, end),
+    draw_lines(cbind(begin, end),
       color = color, linetype = linetype, width = width, showlegend = showlegend
     ) %>%
     add_trace(
       type = "cone",
-      x = end$x, y = end$y, z = end$z, # 箭头坐标
-      u = end$x - begin$x,
-      v = end$y - begin$y,
-      w = end$z - begin$z, # 箭杆在三个坐标轴上的投影长度
+      x = end[1], y = end[2], z = end[3], # 箭头坐标
+      u = end[1] - begin[1],
+      v = end[2] - begin[2],
+      w = end[3] - begin[3], # 箭杆在三个坐标轴上的投影长度
       sizemode = "absolute", # 三个投影只规定箭头的朝向，与箭头大小无关
       # 否则按默认值 sizemode='scaled'，上述投影大小即决定箭头的大小
       sizeref = 1,
@@ -316,9 +349,23 @@ draw_arrow_3d <- function(p, begin, end,
 # 在数据点上标注文本(text)
 draw_text <- function(p, points, texts,
                       color = "black", position = "top center") {
+  if (is.matrix(points)) {
+    if (nrow(points) == 2) {
+      data <- data.table(x = points[1, ], y = points[2, ])
+    } else if (nrow(points) == 3) {
+      data <- data.table(x = points[1, ], y = points[2, ], z = points[3, ])
+    }
+  } else { # 非矩阵，只是一个向量
+    if (length(points) == 2) {
+      data <- data.table(x = points[1], y = points[2])
+    } else {
+      data <- data.table(x = points[1], y = points[2], z = points[3])
+    }
+  }
+
   p %>%
     add_text(
-      data = points,
+      data = data,
       text = texts,
       textfont = list(
         size = 16, color = color
@@ -333,22 +380,36 @@ draw_text <- function(p, points, texts,
 #############################################################
 
 # 绘制多边形，主要作用是填充色块
-# 可通过fillcolor属性定义面的颜色
 draw_polygon <- function(p, points, fill = "grey", color = "black", ...) {
+  if (is.matrix(points)) {
+    if (nrow(points) == 2) {
+      data <- data.table(x = points[1, ], y = points[2, ])
+    } else if (nrow(points) == 3) {
+      data <- data.table(x = points[1, ], y = points[2, ], z = points[3, ])
+    }
+  } else { # 非矩阵，只是一个向量
+    if (length(points) == 2) {
+      data <- data.table(x = points[1], y = points[2])
+    } else {
+      data <- data.table(x = points[1], y = points[2], z = points[3])
+    }
+  }
+
+  N <- ncol(points)
+
   p %>%
     add_polygons(
       # 该函数不会自动补画第一个端点和最后一个端点的连线
-      data = points,
-      fillcolor = fill,
+      data = data,
+      fillcolor = fill, # 可通过fillcolor属性定义面的颜色
       line = list(color = color, width = 1),
       ...
     ) %>%
-    add_lines(
-      data = points[c(1, .N), ],
-      line = list(color = color, width = 1),
-      ...
+    draw_lines(points[, c(N, 1)],
+      color = color, width = 1, ...
     )
 }
+
 
 # 画3d表面
 # 核心是 add_mesh()
@@ -374,14 +435,20 @@ draw_face_3d <- function(p, points,
     )
 }
 
+
 # 两个向量所张成的平行四边形
 draw_cross_mesh <- function(p, u, v, color = "lightgrey") {
-  mesh <- rbind(origin_3d, u, v, vector_add(u, v))
+  mesh <- rbind(
+    c(0, 0, 0), u, v, u + v
+  ) %>%
+    as.data.frame() %>%
+    set_colnames(c("x", "y", "z"))
+
   p %>%
     add_mesh(
       data = mesh,
       facecolor = rep(color, nrow(mesh)), # 不能比三角面数少
     ) %>%
-    draw_line(rbind(u, vector_add(u, v)), color = "grey", showlegend = FALSE) %>%
-    draw_line(rbind(v, vector_add(u, v)), color = "grey", showlegend = FALSE)
+    draw_lines(cbind(u, u + v), color = "grey", showlegend = FALSE) %>%
+    draw_lines(cbind(v, u + v), color = "grey", showlegend = FALSE)
 }
